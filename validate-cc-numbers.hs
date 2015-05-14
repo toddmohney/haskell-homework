@@ -7,5 +7,17 @@ toDigits i
 
 
 toDigitsRev :: Integer -> [Integer]
-toDigitsRev i = reverse $ toDigits i
+toDigitsRev = reverse . toDigits
 
+
+doubleEveryOther :: [Integer] -> [Integer]
+doubleEveryOther = zipWith (*) oneTwo 
+  where oneTwo = 1 : 2 : oneTwo
+
+
+sumDigits :: [Integer] -> Integer
+sumDigits = sum . map (sum . toDigits)
+
+
+validate :: Integer -> Bool
+validate i = (sumDigits . doubleEveryOther . toDigitsRev) i `mod` 10 == 0
