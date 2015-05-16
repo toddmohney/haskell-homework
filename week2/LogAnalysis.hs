@@ -32,6 +32,24 @@ build :: [LogMessage] -> MessageTree
 build = foldr insert Leaf
 
 
+inOrder :: MessageTree -> [LogMessage]
+inOrder Leaf                  = []
+inOrder (Node left msg right) = (inOrder left) ++ [msg] ++ (inOrder right)
 
 
+whatWentWrong :: [LogMessage] -> [String]
+whatWentWrong = map errorMessage . inOrder . build . severeErrors
+  where
+    severeErrors :: [LogMessage] -> [LogMessage]
+    severeErrors = filter isSevere
+
+    isSevere :: LogMessage -> Bool
+    isSevere (LogMessage (Error severity) _ _)
+      | severity >= 50    = True
+      | otherwise         = False
+    isSevere _   = False
+
+    errorMessage :: LogMessage -> String
+    errorMessage (LogMessage _ _ str) = str
+    errorMessage (Unknown _)          = undefined
 
