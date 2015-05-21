@@ -38,3 +38,28 @@ intersperse _ [] = []
 intersperse _ (x:[]) = x 
 intersperse sep (x:xs) = x ++ [sep] ++ intersperse sep xs
 
+
+data Tree a = Node a (Tree a) (Tree a)
+            | Empty
+            deriving (Show)
+
+treeHeight :: Tree a -> Int
+treeHeight Empty = 0
+treeHeight (Node a left right) = 1 + max (treeHeight left) (treeHeight right)
+
+
+data Direction = LeftTurn
+               | RightTurn
+               | Straight
+               deriving (Show)
+
+data Point = Point Int Int
+
+-- using Graham Scan algorithm
+whichWay :: Point -> Point -> Point -> Direction
+whichWay (Point x1 y1) (Point x2 y2) (Point x3 y3)
+  | crossProduct == 0     = Straight
+  | crossProduct > 0      = LeftTurn
+  | otherwise             = RightTurn
+    where crossProduct = ((x2 - x1) * (y3 - y1)) - ((y2 - y1) * (x3 - x1)) 
+
