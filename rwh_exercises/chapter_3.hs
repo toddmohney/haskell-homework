@@ -63,3 +63,11 @@ whichWay (Point x1 y1) (Point x2 y2) (Point x3 y3)
   | otherwise             = RightTurn
     where crossProduct = ((x2 - x1) * (y3 - y1)) - ((y2 - y1) * (x3 - x1)) 
 
+
+turnByTurn :: [Point] -> [Direction]
+turnByTurn ([]) = []
+turnByTurn (_:[]) = []
+turnByTurn (_:_:[]) = []
+turnByTurn (a:b:c:[]) = [(whichWay a b c)]
+turnByTurn (a:b:c:xs) = ((turnByTurn [a, b, c]) ++ turnByTurn (b:c:xs))
+
