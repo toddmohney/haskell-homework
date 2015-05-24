@@ -1,6 +1,7 @@
 module PutJSON 
   (
     renderJSONValue
+  , putJSONValue
   ) where
 
   import Data.List (intercalate)
@@ -22,3 +23,5 @@ module PutJSON
       where values [] = ""
             values items = intercalate "," (map renderJSONValue items)
 
+  putJSONValue :: JSONValue -> IO ()
+  putJSONValue json = putStrLn (renderJSONValue json)
