@@ -28,3 +28,9 @@ module Fibonacci where
   streamRepeat :: a -> Stream a
   streamRepeat a = Stream a (streamRepeat a)
 
+  streamMap :: (a -> b) -> Stream a -> Stream b
+  streamMap f (Stream x xs) = Stream (f x) (streamMap f xs)
+
+  streamFromSeed :: (a -> a) -> a -> Stream a
+  streamFromSeed f a = Stream a (streamFromSeed f (f a))
+
