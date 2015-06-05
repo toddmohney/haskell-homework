@@ -34,3 +34,6 @@ module Fibonacci where
   streamFromSeed :: (a -> a) -> a -> Stream a
   streamFromSeed f a = Stream a (streamFromSeed f (f a))
 
+  nats :: Stream Integer
+  nats = streamFromSeed (+1) 0
+
