@@ -20,17 +20,22 @@ main = do
     Just x -> putStrLn x
     _      -> putStrLn "UID not found."
 
-findByUID :: String -> Integer -> Maybe String
-findByUID content uid = findUsernameByUID uid (map parseLine (lines content))
+
 
 type UIDWithUsername = (Integer, String)
+
+findByUID :: String -> Integer -> Maybe String
+findByUID content uid = findUsernameByUID uid . parseLines . lines $ content
+
+parseLines :: [String] -> [UIDWithUsername]
+parseLines = map parseLine
 
 parseLine :: String -> UIDWithUsername
 parseLine s = 
   let splitString = splitOn ":" s in
       case splitString of
         (userName:stuff:uid:xxs) -> ((read uid), userName)
-        _                        -> ((-10000), "these are not the droids you're looking for")
+        _                        -> ((-10000), "these are not the droids you're looking for") -- this is a terrible way to handle an unparsable line
 
 findUsernameByUID :: Integer -> [UIDWithUsername] -> Maybe String
 findUsernameByUID uid list = foldr (\(userID, username) acc -> if userID == uid then (Just username) else acc) Nothing list
