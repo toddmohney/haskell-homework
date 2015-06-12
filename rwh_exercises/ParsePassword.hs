@@ -1,5 +1,6 @@
 import Control.Monad(when)
 import Data.List.Split(splitOn)
+import Data.Maybe(fromJust)
 import System.Exit
 import System.Environment(getArgs)
 
@@ -27,16 +28,23 @@ type UIDWithUsername = (Integer, String)
 findByUID :: String -> Integer -> Maybe String
 findByUID content uid = findUsernameByUID uid . parseLines . lines $ content
 
-parseLines :: [String] -> [UIDWithUsername]
+parseLines :: [String] -> [Maybe UIDWithUsername]
 parseLines = map parseLine
 
-parseLine :: String -> UIDWithUsername
+parseLine :: String -> Maybe UIDWithUsername
 parseLine s = 
   let splitString = splitOn ":" s in
       case splitString of
-        (userName:stuff:uid:xxs) -> ((read uid), userName)
-        _                        -> ((-10000), "these are not the droids you're looking for") -- this is a terrible way to handle an unparsable line
+        (userName:stuff:uid:xxs) -> Just ((read uid), userName)
+        _                        -> Nothing
 
-findUsernameByUID :: Integer -> [UIDWithUsername] -> Maybe String
-findUsernameByUID uid list = foldr (\(userID, username) acc -> if userID == uid then (Just username) else acc) Nothing list
+findUsernameByUID :: Integer -> [Maybe UIDWithUsername] -> Maybe String
+findUsernameByUID uid list = foldr (\tuple acc -> if (checkMatch tuple uid) then (Just (getUsername (fromJust tuple))) else acc) Nothing list
+
+checkMatch :: Maybe UIDWithUsername -> Integer -> Bool
+checkMatch (Just (uid, _)) uidToMatch = uid == uidToMatch
+checkMatch Nothing _                        = False
+
+getUsername :: UIDWithUsername -> String
+getUsername (_, username) = username
 
