@@ -1,4 +1,5 @@
 import Control.Monad(when)
+import Data.List(lookup)
 import Data.List.Split(splitOn)
 import Data.Maybe(isJust, fromJust)
 import System.Exit
@@ -26,7 +27,7 @@ main = do
 type UIDWithUsername = (Integer, String)
 
 findByUID :: String -> Integer -> Maybe String
-findByUID content uid = findUsernameByUID uid . parseLines . lines $ content
+findByUID content uid = lookup uid . parseLines . lines $ content
 
 parseLines :: [String] -> [UIDWithUsername]
 parseLines = filterInvalidRecords . map parseLine
@@ -40,16 +41,4 @@ parseLine s =
       case splitString of
         (userName:stuff:uid:xxs) -> Just ((read uid), userName)
         _                        -> Nothing
-
-findUsernameByUID :: Integer -> [UIDWithUsername] -> Maybe String
-findUsernameByUID uid list = foldr (\tuple acc -> if (checkMatch tuple uid) then (Just (getUsername tuple)) else acc) Nothing list
-
-checkMatch :: UIDWithUsername -> Integer -> Bool
-checkMatch tuple uidToMatch = (getUID tuple) == uidToMatch
-
-getUID:: UIDWithUsername -> Integer
-getUID = fst
-
-getUsername :: UIDWithUsername -> String
-getUsername = snd
 
