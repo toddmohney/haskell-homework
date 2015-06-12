@@ -1,6 +1,6 @@
 import Control.Monad(when)
 import Data.List.Split(splitOn)
-import Data.Maybe(fromJust)
+import Data.Maybe(isJust, fromJust)
 import System.Exit
 import System.Environment(getArgs)
 
@@ -28,8 +28,11 @@ type UIDWithUsername = (Integer, String)
 findByUID :: String -> Integer -> Maybe String
 findByUID content uid = findUsernameByUID uid . parseLines . lines $ content
 
-parseLines :: [String] -> [Maybe UIDWithUsername]
-parseLines = map parseLine
+parseLines :: [String] -> [UIDWithUsername]
+parseLines = filterInvalidRecords . map parseLine
+  where
+    filterInvalidRecords :: [Maybe UIDWithUsername] -> [UIDWithUsername]
+    filterInvalidRecords = map fromJust . filter isJust
 
 parseLine :: String -> Maybe UIDWithUsername
 parseLine s = 
@@ -38,13 +41,15 @@ parseLine s =
         (userName:stuff:uid:xxs) -> Just ((read uid), userName)
         _                        -> Nothing
 
-findUsernameByUID :: Integer -> [Maybe UIDWithUsername] -> Maybe String
-findUsernameByUID uid list = foldr (\tuple acc -> if (checkMatch tuple uid) then (Just (getUsername (fromJust tuple))) else acc) Nothing list
+findUsernameByUID :: Integer -> [UIDWithUsername] -> Maybe String
+findUsernameByUID uid list = foldr (\tuple acc -> if (checkMatch tuple uid) then (Just (getUsername tuple)) else acc) Nothing list
 
-checkMatch :: Maybe UIDWithUsername -> Integer -> Bool
-checkMatch (Just (uid, _)) uidToMatch = uid == uidToMatch
-checkMatch Nothing _                        = False
+checkMatch :: UIDWithUsername -> Integer -> Bool
+checkMatch tuple uidToMatch = (getUID tuple) == uidToMatch
+
+getUID:: UIDWithUsername -> Integer
+getUID = fst
 
 getUsername :: UIDWithUsername -> String
-getUsername (_, username) = username
+getUsername = snd
 
