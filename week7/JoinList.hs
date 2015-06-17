@@ -10,7 +10,7 @@ module JoinList where
   (+++) :: Monoid m => JoinList m a -> JoinList m a -> JoinList m a
   a +++ Empty = a
   Empty +++ b = b
-  a +++ b     = Append (tag a `mappend` tag b) a b
+  a +++ b     = Append (tag a <> tag b) a b
 
   tag :: Monoid m => JoinList m a -> m
   tag Empty = mempty
@@ -19,12 +19,30 @@ module JoinList where
 
   indexJ :: (Sized b, Monoid b) => Int -> JoinList b a -> Maybe a
   indexJ _ Empty = Nothing
-  indexJ 0 (Single m a) = Just a
-  indexJ _ (Single _ _) = Nothing
+  indexJ i (Single m a)
+    | i == 0 = Just a
+    | otherwise = Nothing
   indexJ i (Append _ l r)
-    | i < sizeOfLeft   = indexJ i l
-    | otherwise        = indexJ (i-sizeOfLeft) r
-      where sizeOfLeft = getSize . size . tag $ l
+    | i < (sizeJ l) = indexJ i l
+    | otherwise     = indexJ (i-(sizeJ l)) r
+
+  dropJ :: (Sized b, Monoid b) => Int -> JoinList b a -> JoinList b a
+  dropJ 0 jl = jl
+  dropJ _ Empty = Empty
+  dropJ _ (Single _ _) = Empty
+  dropJ i (Append m l r)
+    | i < (sizeJ l) = (dropJ i l) +++ r
+    | otherwise     = dropJ (i - (sizeJ l)) r
+
+  takeJ :: (Sized b, Monoid b) => Int -> JoinList b a -> JoinList b a
+  takeJ 0 _ = Empty
+  takeJ _ jl@(Single m a) = jl
+  takeJ i (Append m l r)
+    | i <= (sizeJ l) = takeJ i l
+    | otherwise     = l +++ (takeJ i r)
+
+  sizeJ :: (Sized b, Monoid b) => JoinList b a -> Int
+  sizeJ jl = getSize . size . tag $ jl
 
   (!!?) :: [a] -> Int -> Maybe a
   [] !!? _ = Nothing
