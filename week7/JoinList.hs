@@ -1,5 +1,6 @@
 module JoinList where
   import Data.Monoid
+  import Scrabble
   import Sized
 
   data JoinList m a = Empty
@@ -11,6 +12,9 @@ module JoinList where
   a +++ Empty = a
   Empty +++ b = b
   a +++ b     = Append (tag a <> tag b) a b
+
+  scoreLine :: String -> JoinList Score String
+  scoreLine str = Single (scoreString str) str 
 
   tag :: Monoid m => JoinList m a -> m
   tag Empty = mempty
