@@ -14,7 +14,7 @@ module Scrabble where
   score = undefined
 
   scoreString :: String -> Score
-  scoreString word = Score $ (foldr (+) 0) $ map scoreLetter $ map toUpper word 
+  scoreString word = Score . (foldr (+) 0) . map scoreLetter . map toUpper $ word 
 
   scoreLetter :: Char -> Int
   scoreLetter l
