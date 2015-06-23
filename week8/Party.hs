@@ -2,6 +2,7 @@ module Party where
   import Data.Monoid
   import Data.Tree
   import Employee
+  import System.Environment(getArgs)
 
   instance Monoid GuestList where
     mempty = GL [] 0
@@ -20,12 +21,22 @@ module Party where
     | fun1 >= fun2 = list1
     | otherwise    = list2
 
-  treeFold :: (a -> b -> b) -> b -> Tree a -> b
-  treeFold fun acc t = foldr fun acc (flatten t)
-
   nextLevel :: Employee -> [(GuestList, GuestList)] -> (GuestList, GuestList)
-  nextLevel = undefined
+  nextLevel boss []     = ((glCons boss mempty), mempty)
+  nextLevel boss gLists = (withBoss, withoutBoss)
+    where withBoss    = glCons boss (mconcat (map fst gLists))
+          withoutBoss = mconcat (map snd gLists)
+
+  treeFold :: (a -> [b] -> b) -> Tree a -> b
+  treeFold f (Node root xs) = f root (map (treeFold f) xs)
 
   maxFun :: Tree Employee -> GuestList
-  maxFun = undefined
+  maxFun tree = (uncurry moreFun (treeFold nextLevel tree))
+
+  parse :: GuestList -> String
+  parse (GL emp fun) = "Fun score : " 
+                      ++ show fun ++ "\n"
+                      ++ unlines (map empName emp)
+  main :: IO ()
+  main = readFile "company.txt" >>= putStrLn . parse . maxFun . read
 
