@@ -57,26 +57,31 @@ posInt = Parser f
 -- Your code goes below here
 ------------------------------------------------------------
 
-
 {- newtype Parser a = Parser { runParser :: String -> Maybe (a, String) } -}
 
-instance Functor Parser where
-  {- ...don't really understand how this works -}
-  {- fucking point-free obscurity -}
-  {- fmap f (Parser runParser) = Parser $ (fmap (first f)) . runParser -}
+{-
+  let p = posInt
+  let f = (+100)
+  let parser = fmap f p
 
-  {- I understand this better -}
-  fmap f p = Parser (\s -> fmap (first f) (runParser p s ))
+  runParser parser "100" 
+  Just (200, "")
+
+  runParser parser "100xyz" 
+  Just (200, "xyz")
+-}
+instance Functor Parser where
+  fmap f p = Parser $ (fmap (first f)) . runParser p
 
 instance Applicative Parser where
-  pure a    = Parser (\s -> Just(a, s))
-  a1 <*> a2 = undefined
+  pure a = Parser (\s -> Just (a, s))
+  p1 <*> p2 = Parser parse
+    where parse s = do 
+          r1 <- runParser p1 s
+          r2 <- runParser p2 (snd r1)
+          return (fst r1 $ fst r2, snd r2)
+
 
 first :: (a -> b) -> (a,c) -> (b,c)
-first f (a,c) = (f a, c)
-
-
-
-
-
+first f (a,c) = ((f a),c)
 
