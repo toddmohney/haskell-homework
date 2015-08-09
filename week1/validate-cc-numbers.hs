@@ -1,23 +1,30 @@
-import Data.Char (digitToInt)
+module CreditCardNumbers where
+  import Data.Char (digitToInt)
 
-toDigits :: Integer -> [Integer]
-toDigits i 
-  | i <= 0 = []
-  | otherwise = map (toInteger . digitToInt) (show i)
+  toDigits :: Integer -> [Integer]
+  toDigits i
+    | i < 0     = []
+    | i < 10    = [i]
+    | otherwise = map digitToInteger $ show i
+      where 
+        digitToInteger :: Char -> Integer
+        digitToInteger = toInteger . digitToInt
 
+  toDigitsRev :: Integer -> [Integer]
+  toDigitsRev = reverse . toDigits
 
-toDigitsRev :: Integer -> [Integer]
-toDigitsRev = reverse . toDigits
+  doubleEveryOther :: [Integer] -> [Integer]
+  doubleEveryOther = reverse . zipWith (*) oneTwos . reverse
+    where 
+      oneTwos :: [Integer]
+      oneTwos = cycle [1,2]
 
+  sumDigits :: [Integer] -> Integer
+  sumDigits = sum . concatMap toDigits
 
-doubleEveryOther :: [Integer] -> [Integer]
-doubleEveryOther = zipWith (*) oneTwo 
-  where oneTwo = 1 : 2 : oneTwo
+  validate :: Integer -> Bool
+  validate ccNum = buildChecksum ccNum `mod` 10 == 0
+    where
+      buildChecksum :: Integer -> Integer
+      buildChecksum = sumDigits . doubleEveryOther . toDigits
 
-
-sumDigits :: [Integer] -> Integer
-sumDigits = sum . map (sum . toDigits)
-
-
-validate :: Integer -> Bool
-validate i = (sumDigits . doubleEveryOther . toDigitsRev) i `mod` 10 == 0
