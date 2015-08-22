@@ -5,12 +5,15 @@ module LogAnalysis where
   -- Exercise 1
   parseMessage :: String -> LogMessage
   parseMessage = parseMessage' . words
-    where 
+    where
       parseMessage' :: [String] -> LogMessage
-      parseMessage' ("I":ts:xs)          = LogMessage Info (read ts) (unwords xs)
-      parseMessage' ("W":ts:xs)          = LogMessage Warning (read ts) (unwords xs)
-      parseMessage' ("E":severity:ts:xs) = LogMessage (Error (read severity)) (read ts) (unwords xs)
-      parseMessage' str                  = Unknown (unwords str)
+      parseMessage' ("I":ts:desc)             = buildLogMessage Info ts desc
+      parseMessage' ("W":ts:desc)             = buildLogMessage Warning ts desc
+      parseMessage' ("E":severity:ts:desc)    = buildLogMessage (Error (read severity)) ts desc
+      parseMessage' str                       = Unknown (unwords str)
+
+      buildLogMessage :: MessageType -> String -> [String] -> LogMessage
+      buildLogMessage msgType ts desc = LogMessage msgType (read ts) (unwords desc)
 
   parse :: String -> [LogMessage]
   parse = map parseMessage . lines
@@ -19,12 +22,11 @@ module LogAnalysis where
   -- Exercise 2
   insert :: LogMessage -> MessageTree -> MessageTree
   insert (Unknown _) tree = tree
-  insert logMessage Leaf  = Node Leaf logMessage Leaf
-  insert msg@(LogMessage _ ts _) (Node l msg2@(LogMessage _ ts2 _) r)
-    | ts < ts2  = Node (insert msg l) msg2 r
-    | otherwise = Node l msg2 (insert msg r)
-  insert LogMessage{} (Node _ (Unknown _) _) = undefined -- we must provide this pattern to avoid 
-                                                         -- warnings about non-exhaustive pattern matching
+  insert msg Leaf = Node Leaf msg Leaf
+  insert msg@(LogMessage _ ts _) (Node left msg2@(LogMessage _ ts2 _) right)
+    | ts < ts2  = Node (insert msg left) msg2 right
+    | otherwise = Node left msg2 (insert msg right)
+  insert LogMessage{} (Node _ (Unknown _) _) = undefined
   --
 
   -- Exercise 3
@@ -35,12 +37,12 @@ module LogAnalysis where
   -- Exercise 4
   inOrder :: MessageTree -> [LogMessage]
   inOrder Leaf = []
-  inOrder (Node l msg r) = inOrder l ++ [msg] ++ inOrder r
+  inOrder (Node left msg right) = inOrder left ++ [msg] ++ inOrder right
   --
 
   -- Exercise 5
   whatWentWrong :: [LogMessage] -> [String]
-  whatWentWrong = map getMessage . inOrder . build . filter severeError
+  whatWentWrong = map message . inOrder . build . filter severeError
     where
       severeError :: LogMessage -> Bool
       severeError (LogMessage (Error severity) _ _) = severity >= severityThreshold
@@ -49,8 +51,7 @@ module LogAnalysis where
       severityThreshold :: (Num a) => a
       severityThreshold = 50
 
-      getMessage :: LogMessage -> String
-      getMessage (LogMessage _ _ msg) = msg
-      getMessage (Unknown msg)        = msg
+      message :: LogMessage -> String
+      message (LogMessage _ _ msg) = msg
+      message (Unknown msg)        = msg
   --
-
