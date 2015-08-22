@@ -1,55 +1,46 @@
 {-# OPTIONS_GHC -Wall #-}
 module LogAnalysis where
+  import Log
 
-import Log
+  parse :: String -> [LogMessage]
+  parse = map parseMessage . lines
 
-parseMessage :: String -> LogMessage
-parseMessage x = let wordlist = words x in
-  case wordlist of
-    ("I":timestamp:message)          -> LogMessage Info (read timestamp) (unwords message)
-    ("W":timestamp:message)          -> LogMessage Warning (read timestamp) (unwords message)
-    ("E":severity:timestamp:message) -> LogMessage (Error (read severity)) (read timestamp) (unwords message)
-    _                                -> Unknown (unwords wordlist)
+  parseMessage :: String -> LogMessage
+  parseMessage = parseMessage' . words
+    where 
+      parseMessage' :: [String] -> LogMessage
+      parseMessage' ("I":ts:xs)          = LogMessage Info (read ts) (unwords xs)
+      parseMessage' ("W":ts:xs)          = LogMessage Warning (read ts) (unwords xs)
+      parseMessage' ("E":severity:ts:xs) = LogMessage (Error (read severity)) (read ts) (unwords xs)
+      parseMessage' str                  = Unknown (unwords str)
 
+  whatWentWrong :: [LogMessage] -> [String]
+  whatWentWrong = map getMessage . inOrder . build . filter severeError
+    where
+      severeError :: LogMessage -> Bool
+      severeError (LogMessage (Error severity) _ _) = severity >= severityThreshold
+      severeError _                                 = False
 
-parse :: String -> [LogMessage]
-parse = map parseMessage . lines
+      severityThreshold :: (Num a) => a
+      severityThreshold = 50
 
+      getMessage :: LogMessage -> String
+      getMessage (LogMessage _ _ msg) = msg
+      getMessage (Unknown msg)        = msg
 
-insert :: LogMessage -> MessageTree -> MessageTree
-insert (Unknown _) messageTree = messageTree -- ignore unknown messages
-insert logMessage Leaf         = (Node Leaf logMessage Leaf) -- base case, insert new message node
-insert logMessage (Node leftMsg msg rightMsg)
-  | (timestamp logMessage) > (timestamp msg) = Node leftMsg msg (insert logMessage rightMsg)
-  | otherwise                                = Node (insert logMessage leftMsg) msg rightMsg
-  where
-    timestamp :: LogMessage -> TimeStamp
-    timestamp (LogMessage _ ts _) = ts
-    timestamp (Unknown _)         = undefined
+  build :: [LogMessage] -> MessageTree
+  build = foldr insert Leaf
 
+  inOrder :: MessageTree -> [LogMessage]
+  inOrder Leaf = []
+  inOrder (Node l msg r) = inOrder l ++ [msg] ++ inOrder r
 
-build :: [LogMessage] -> MessageTree
-build = foldr insert Leaf
-
-
-inOrder :: MessageTree -> [LogMessage]
-inOrder Leaf                  = []
-inOrder (Node left msg right) = (inOrder left) ++ [msg] ++ (inOrder right)
-
-
-whatWentWrong :: [LogMessage] -> [String]
-whatWentWrong = map errorMessage . inOrder . build . severeErrors
-  where
-    severeErrors :: [LogMessage] -> [LogMessage]
-    severeErrors = filter isSevere
-
-    isSevere :: LogMessage -> Bool
-    isSevere (LogMessage (Error severity) _ _)
-      | severity >= 50    = True
-      | otherwise         = False
-    isSevere _   = False
-
-    errorMessage :: LogMessage -> String
-    errorMessage (LogMessage _ _ str) = str
-    errorMessage (Unknown _)          = undefined
+  insert :: LogMessage -> MessageTree -> MessageTree
+  insert (Unknown _) tree = tree
+  insert logMessage Leaf  = Node Leaf logMessage Leaf
+  insert msg@(LogMessage _ ts _) (Node l msg2@(LogMessage _ ts2 _) r)
+    | ts < ts2  = Node (insert msg l) msg2 r
+    | otherwise = Node l msg2 (insert msg r)
+  insert LogMessage{} (Node _ (Unknown _) _) = undefined -- we must provide this pattern to avoid 
+                                                         -- warnings about non-exhaustive pattern matching
 
