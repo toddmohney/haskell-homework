@@ -42,21 +42,19 @@ module Golf where
       addToAssociationList num Nothing list      = addToAL list (num,1)
 
       histogram' :: [NumberCounter] -> String
-      histogram' xs = concatMap (drawLine xs) (reverse [0..(maxOccurences xs)]) ++ drawSeparator ++ drawLegend
+      histogram' xs = concatMap (drawLine xs) (reverse [1..(maxOccurences xs)]) ++ drawSeparator ++ drawLegend
 
       drawLine :: [NumberCounter] -> Int -> String
-      drawLine xs num 
-        | num == 0  = "\n"
-        | otherwise = concatMap (drawSymbol xs num) [0..9] ++ "\n"
-            where
-              drawSymbol :: [NumberCounter] -> Int -> Int -> String
-              drawSymbol xs' occ num' = determineSymbol (lookup num' xs') occ
-                where 
-                  determineSymbol :: Maybe Int -> Int -> String
-                  determineSymbol Nothing _ = " "
-                  determineSymbol (Just n) occ'
-                    | n >= occ' = "*"
-                    | otherwise = " "
+      drawLine xs num = concatMap (drawSymbol xs num) [0..9] ++ "\n"
+        where
+          drawSymbol :: [NumberCounter] -> Int -> Int -> String
+          drawSymbol xs' occ num' = determineSymbol (lookup num' xs') occ
+            where 
+              determineSymbol :: Maybe Int -> Int -> String
+              determineSymbol Nothing _ = " "
+              determineSymbol (Just n) occ'
+                | n >= occ' = "*"
+                | otherwise = " "
 
       drawSeparator :: String
       drawSeparator = "==========\n"
