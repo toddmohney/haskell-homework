@@ -1,5 +1,6 @@
 {-# OPTIONS_GHC -Wall #-}
 module Golf where
+  import Data.List (maximumBy)
 
   skips :: [a] -> [[a]]
   skips xs = map (`everyNth` xs) [1..(length xs)]
@@ -27,4 +28,51 @@ module Golf where
             testElem = src !! idx
             prevElem = src !! (idx-1)
             nextElem = src !! (idx+1)
+
+  type NumberCounter = (Int,Int) -- (number, occurencesOfTheNumber)
+
+  histogram :: [Int] -> String
+  histogram = histogram' . foldr buildAssociationList []
+    where 
+      buildAssociationList :: Int -> [NumberCounter] -> [NumberCounter]
+      buildAssociationList num list = addToAssociationList num (lookup num list) list
+
+      addToAssociationList :: Int -> Maybe Int -> [NumberCounter] -> [NumberCounter]
+      addToAssociationList num (Just count) list = addToAL list (num,count+1)
+      addToAssociationList num Nothing list      = addToAL list (num,1)
+
+      histogram' :: [NumberCounter] -> String
+      histogram' xs = concatMap (drawLine xs) (reverse [0..(maxOccurences xs)]) ++ drawSeparator ++ drawLegend
+
+      drawLine :: [NumberCounter] -> Int -> String
+      drawLine xs num 
+        | num == 0  = "\n"
+        | otherwise = concatMap (drawSymbol xs num) [0..9] ++ "\n"
+            where
+              drawSymbol :: [NumberCounter] -> Int -> Int -> String
+              drawSymbol xs' occ num' = determineSymbol (lookup num' xs') occ
+                where 
+                  determineSymbol :: Maybe Int -> Int -> String
+                  determineSymbol Nothing _ = " "
+                  determineSymbol (Just n) occ'
+                    | n >= occ' = "*"
+                    | otherwise = " "
+
+      drawSeparator :: String
+      drawSeparator = "==========\n"
+
+      drawLegend :: String
+      drawLegend = "0123456789"
+
+  maxOccurences :: [NumberCounter] -> Int
+  maxOccurences xs = getValue $ maximumBy (\(_,v) (_,v') -> compare v v') xs
+
+  getValue :: NumberCounter -> Int
+  getValue (_,v) = v
+
+  addToAL :: [(Int,Int)] -> (Int,Int) -> [(Int,Int)]
+  addToAL [] (k',v') = [(k',v')]
+  addToAL ((k,v):xs) (k',v')
+    | k == k'   = addToAL xs (k',v')
+    | otherwise = (k,v) : addToAL xs (k',v')
 
