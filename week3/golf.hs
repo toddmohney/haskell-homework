@@ -1,5 +1,14 @@
 {-# OPTIONS_GHC -Wall #-}
 module Golf where
+
+  skips :: [a] -> [[a]]
+  skips xs = map (`everyNth` xs) [1..(length xs)]
+
+  everyNth :: Int -> [a] -> [a]
+  everyNth num xs 
+    | length xs >= num = (last . take num $ xs) : everyNth num (drop num xs)
+    | otherwise = []
+
   type IndexResultSource = (Int,[Int],[Int])
 
   localMaximum :: [Int] -> [Int]
