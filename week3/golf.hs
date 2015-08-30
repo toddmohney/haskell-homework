@@ -42,10 +42,10 @@ module Golf where
       addToAssociationList num Nothing list      = addToAL list (num,1)
 
       histogram' :: [NumberCounter] -> String
-      histogram' xs = concatMap (drawLine xs) (reverse [1..(maxOccurences xs)]) ++ drawSeparator ++ drawLegend
+      histogram' xs = concatMap (drawLine xs) (reverse [1..(maxOccurences xs)]) ++ drawSeparator ++ "\n" ++ drawLegend ++ "\n"
 
       drawLine :: [NumberCounter] -> Int -> String
-      drawLine xs num = concatMap (drawSymbol xs num) [0..9] ++ "\n"
+      drawLine xs num = concatMap (drawSymbol xs num) numberRange ++ "\n"
         where
           drawSymbol :: [NumberCounter] -> Int -> Int -> String
           drawSymbol xs' occ num' = determineSymbol (lookup num' xs') occ
@@ -57,10 +57,13 @@ module Golf where
                 | otherwise = " "
 
       drawSeparator :: String
-      drawSeparator = "==========\n"
+      drawSeparator = concat $ replicate (length numberRange) "="
 
       drawLegend :: String
-      drawLegend = "0123456789"
+      drawLegend = concatMap show numberRange
+
+      numberRange :: [Int]
+      numberRange = [0..9]
 
   maxOccurences :: [NumberCounter] -> Int
   maxOccurences xs = getValue $ maximumBy (\(_,v) (_,v') -> compare v v') xs
@@ -68,7 +71,7 @@ module Golf where
   getValue :: NumberCounter -> Int
   getValue (_,v) = v
 
-  addToAL :: [(Int,Int)] -> (Int,Int) -> [(Int,Int)]
+  addToAL :: (Eq a) => [(a,b)] -> (a,b) -> [(a,b)]
   addToAL [] (k',v') = [(k',v')]
   addToAL ((k,v):xs) (k',v')
     | k == k'   = addToAL xs (k',v')
